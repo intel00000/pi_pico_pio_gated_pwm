@@ -74,26 +74,25 @@ pinMode(TESTING_PIN, INPUT);
 attachInterrupt(digitalPinToInterrupt(TESTING_PIN), testPinISR, RISING);
 ```
 
-### requesting 50 pulses at 20000Hz, no forced exit
+### 50 pulses, no forced exit
 
 ![requesting 50 pulses at 20000Hz, no forced exit](images/50.png)
 
-### requesting 100000 pulses at 20000Hz, no forced exit
+### 100000 pulses, no forced exit
 
 ![requesting 100000 pulses at 20000Hz, no forced exit](images/100000.png)
 
-### requesting 100000 pulses at 20000Hz, forced exit after 1 seconds (early exit)
+### 100000 pulses, exit after 1 seconds (early exit)
 
 ![requesting 100000 pulses at 20000Hz, forced exit after 1 seconds](images/100000_1.png)
 
-### requesting 100000 pulses at 20000Hz, forced exit after 10 seconds (late exit, frequency calculated as 100000/10 = 10000Hz)
+### 100000 pulses, exit after 10 seconds (late exit, frequency calculated as 100000/10 = 10000Hz)
 
 ![requesting 100000 pulses at 20000Hz, forced exit after 10 seconds](images/100000_10.png)
 
 ## References
 
-This program uses the following libraries and compiled in the Arduino IDE:
+This program uses the following libraries and compiled in Arduino IDE:
 
-- Standard Arduino libraries
 - Raspberry Pi Pico Arduino core
-- Raspberry Pi Pico SDK
+- Standard Arduino libraries
