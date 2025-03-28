@@ -1,8 +1,8 @@
-# Gated Pulse Generator via RP2040 pio
+# Gated Pulse Generator
 
 ## Description
 
-This is a rp2040 arduino program that output a specific number of pulses at a specific frequency, intended for used with stepper motors with a stepper driver.
+This program that output a specific number of pulses at a specific frequency, intended for used with stepper motors with a stepper driver.
 
 ## Main idea
 
@@ -60,12 +60,12 @@ The frequency and the pulse width of the output signal can be set by changing th
 ## Benefits of using pio
 
 1. Accurate timing of the output pulses, as the pio is relaying pulses from essentially a hardware pwm signal. As opposed to using a loop in the main program and timers to generate the pulses, which can be affected by other tasks and interrupts running on the CPU.
-2. No CPU overhead, as the pio is handling the pulse generation and counting. All CPU has to do is push the number of pulses to the pio FIFO and clear the interrupt flag when the pio has finished pulsing.
+2. Low CPU overhead, as the pio is handling the pulse generation and counting. All CPU has to do is push the number of pulses to the pio FIFO and clear the interrupt flag when the pio has finished pulsing.
 3. Easy to adjust the frequency and pulse width of the output signal by changing the reference pwm signal.
 
 ## Testing Example
 
-We physically connect the output pin to another free gpio pin on the pico and use arduino attachInterrupt to count the number of output pulses.
+Physically connect the output pin to another free gpio pin on the pico and use arduino attachInterrupt to count the number of output pulses.
 ```cpp
 // 6) Also set up a CPU interrupt to measure the number of pulses seemed on the test pin
 // NOTE: the test pin need to be physically wired to the side-set pin during the test
