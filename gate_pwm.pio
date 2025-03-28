@@ -1,0 +1,72 @@
+; File: gate_pwm.pio
+
+; Main idea: reference to a standard PWM signal, this program will output a fixed number of pulses
+;   - the number of pulses is read from the FIFO (pulled into the x register)
+;   - the pwm signal is read from the based input pin
+;   - the side-set pin is used to output a gated PWM signal
+
+.program gate_pwm      ; This PIO program gates an input PWM signal, passing a fixed number of pulses.
+.side_set 1 opt        ; We'll use 1 side-set pin for output
+
+
+.wrap_target
+pull_value:                 ; Wait to get the number of pulses from the FIFO
+	pull block              ; pulling from FIFO block until FIFO has data
+	mov x, osr              ; move the value to x register (number of pulses to output)
+	set y, 0                ; set y register to 0, used to check if x is zero
+
+switching:                  ; switching block, wait for the PWM signal to go high
+	wait 1 pin 0  side 1    ; wait for the PWM signal to go high, set side-set pin 1 (output pin high)
+	wait 0 pin 0  side 0    ; wait for the PWM signal to go low, set side-set pin 0 (output pin low)
+	jmp x--, decide         ; if x is non-zero, decrement x and jump to decide block
+							; if x is zero, we fall through to decide without decrementing x
+
+decide:                     ; add this block to fix the problem with one more pulse being passed
+	jmp pin finish          ; check the value of GPIO pin selected by EXECCTRL_JMP_PIN, if high, jump to finish
+							; the main program will set this pin to high to interrupt a pulse midway
+							; if the pin is low, we continue to decrement x
+	jmp x!=y, switching     ; if x is not zero (y is set to 0), decrement x, jump back to wait_pwm
+							; if x reach zero, instruction fall down to finish block
+
+finish:                     ; finish block set the irq flag, then wait for main program to clear it
+	irq set 0 rel           ; set the irq flag to signal the main program, we are done passing pulses
+	irq wait 0 rel          ; wait for the irq flag to be cleared by the main program
+	jmp pull_value          ; jump back to pull_value to get the next number of pulses
+.wrap
+
+% c-sdk {
+// setup code for the pio C SDK
+#include "hardware/clocks.h"
+#include "hardware/pio.h"
+#include "pico/stdlib.h"
+
+// We'll provide a helper to init the gate_pwm program
+static inline void gate_pwm_program_init(
+	PIO pio,
+	uint sm,
+	uint offset,
+	uint in_pin,   // The input pin (PWM signal)
+	uint side_pin, // The side-set pin (gated output)
+	uint jmp_pin   // pin for jmp pin finish
+)
+{
+	// get default config from the auto-generated functions
+	pio_sm_config c = gate_pwm_program_get_default_config(offset);
+
+	// map output pin to the side-set pin => this is the gated output
+	pio_gpio_init(pio, side_pin);                               // first init the side-set pin to pio
+	pio_sm_set_consecutive_pindirs(pio, sm, side_pin, 1, true); // set it as output
+	sm_config_set_sideset_pin_base(&c, side_pin);
+
+	// map the input pin to the input pin => this is the PWM signal
+	// no need to use pio_gpio_init since we are only reading it
+	sm_config_set_in_pin_base(&c, in_pin);
+
+	// map the jump pin to the jump pin => this is used to signal midway interrupt
+	// again we are only reading it, so no need to use pio_gpio_init
+	sm_config_set_jmp_pin(&c, jmp_pin);
+
+	// 6) Initialize the SM with that config
+	pio_sm_init(pio, sm, offset, &c);
+}
+%}
