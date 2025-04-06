@@ -183,6 +183,29 @@ void parseInputString()
         return;
     }
 
+    // check if N is a string name pwm, if so we will change the pwm frequency and duty cycle
+    if (values[0].equalsIgnoreCase("pwm"))
+    {
+        if (valueCount < 3)
+        {
+            Serial.println("ERROR: Invalid command format for PWM change. Expected format is 'pwm:<frequency>:<duty_cycle>'");
+            return;
+        }
+        float newFrequency = values[1].toFloat();
+        float newDutyCycle = values[2].toFloat();
+        if (newFrequency <= 0 || newDutyCycle < 0 || newDutyCycle > 100)
+        {
+            Serial.println("ERROR: Invalid frequency or duty cycle. Frequency must be > 0 and duty cycle must be between 0 and 100.");
+            return;
+        }
+        frequency = newFrequency;
+        duty_cycle = newDutyCycle;
+        Serial.printf("Changing PWM to freq=%f Hz, duty=%f%%\n", frequency, duty_cycle);
+        setPWM(IN_PIN, frequency, duty_cycle, true); // reconfigure the PWM
+        return;
+    }
+    Serial.println("---------------------------------------------------------------");
+
     // parse 2 integers "N T"
     int N = values[0].toInt();     // number of pulses to gate
     float T = values[1].toFloat(); // time in seconds to forcibly exit
